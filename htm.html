@@ -1,0 +1,107 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=7" />
+<meta name="Robots"   content="none"/>
+<meta http-equiv="Expires" content="0"/>
+<meta http-equiv="Cache-Control"  content="no-cache"/> 
+<meta http-equiv="pragma"  content="no-cache"/> 
+<title>消息提示</title>
+
+<link  href="/otsweb/css/style.css" rel="stylesheet"  type="text/css"/>
+<link  href="/otsweb/css/newsty.css" rel="stylesheet"  type="text/css"/>
+<link  href="/otsweb/css/contact.css" rel="stylesheet"  type="text/css"/>
+<link href="/otsweb/css/validation.css" rel="stylesheet" type="text/css" />
+<link rel="stylesheet" type="text/css" href="/otsweb/css/easyui.css"/>
+<link rel="stylesheet" type="text/css" href="/otsweb/css/suggest.css"/>
+<link href="/otsweb/css/cupertino/jquery-ui-1.8.2.custom.css" rel="stylesheet" type="text/css" />
+<link href="/otsweb/css/ots_common.css" rel="stylesheet" type="text/css" />
+<link rel="shortcut icon" href="http://www.12306.cn/mormhweb/images/favicon.ico"/>
+<script type="text/javascript" src="/otsweb/js/common/iepngfix_tilebg.js?version=5.1"></script>
+<script src="/otsweb/js/common/jquery-1.4.2.min.js?version=5.1" type="text/javascript"></script>
+<script src="/otsweb/js/common/autoHeight.js?version=5.1" type="text/javascript"></script>
+<script src="/otsweb/js/common/jquery.bgiframe.min.js?version=5.1" type="text/javascript"></script>
+<script src="/otsweb/js/common/jquery.easyui.min.js?version=5.1" type="text/javascript"></script>
+<script src="/otsweb/js/common/jquery.form.js?version=5.1" type="text/javascript"></script>
+<script src="/otsweb/js/common/datepicker/WdatePicker.js?version=5.1" type="text/javascript"></script>
+<script src="/otsweb/js/common/j.suggest.js?version=5.1" type="text/javascript"></script>
+<script src="/otsweb/js/common/school_display1.js?version=5.1" type="text/javascript"></script>
+<script src="/otsweb/js/common/school_suggest1.js?version=5.1" type="text/javascript"></script>
+<script src="/otsweb/js/common/city_name_suggest.js?version=5.1" type="text/javascript"></script>
+<script src="/otsweb/js/common/trainCodeSuggest.js?version=5.1" type="text/javascript"></script>
+<script src="/otsweb/js/common/date.js?version=5.1" type="text/javascript"></script>
+<script src="/otsweb/js/common/sidetag.js?version=5.1" type="text/javascript"></script>
+
+
+<script>
+   $(document).ready(function(){
+	   if(parent.notLogin==undefined) {
+		   parent.location='/otsweb' + '/main.jsp';
+		   return;
+		   }
+	        var isHide = "";
+	        if (isHide == "true") {
+		        if(parent.hideMenu){
+		        	//parent.hideMenu();
+			    }
+		     } else {
+		    	 if(parent.showMenu){
+		    		 parent.showMenu();
+				 }
+			 }
+			 var clicktitle = '消息提示';
+			 if(parent.clickMenu&&clicktitle!==''){
+				 parent.clickMenu('消息提示');
+		     }
+
+			 
+			 var isLogin= true
+			 var u_name = '王瀚';
+			 if (isLogin) {
+			  parent.hasLogin(u_name);
+	  	     }else{
+	  	  	  parent.notLogin();
+	      	 }
+	 });
+</script>
+</head>
+<body>
+
+	<div class="text1">
+	  <div class="pim_rightnew">
+	    <div class="sign_suc"  style="font-family:'黑体';">
+        <img src="/otsweb/images/succde_fault.jpg" alt=""  align="absmiddle"/> 系统忙！</div>   
+        <div class="error_text">请点击<a href="/otsweb/order/myOrderAction.do?method=queryMyOrderNotComplete&leftmenu=Y"  class="text_yellow">我的订单</a>确认客票的状态后再尝试后续操作。谢谢！</div> 
+      </div>
+    </div>
+
+ 
+</body>
+</html>
+
+<script language="javascript">
+var f = function() {
+		var message = "";
+        var messageShow ="";
+        var flag ='null';
+        if(messageShow != ""){
+			if(flag == 'u'){
+				$("#messageUp").css({display:"inline"});
+				document.getElementById("messageUp").innerHTML = message;
+			}else{
+				$("#messageDown").css({display:"inline"});
+				document.getElementById("messageDown").innerHTML = message;
+			}
+         }else{
+     		if ( message != ""){ 
+    			alert(message);
+
+    		}
+
+         } }
+         window.setTimeout(f, 500);
+</script>
