@@ -12,6 +12,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -252,6 +253,29 @@ public class CommonUtil
         return getParamsString(obj, null);
     }
     
+    public static String getParamsString(Map<String, String> paramMap)
+    {
+        String ret = "";
+        if (null != paramMap)
+        {
+            StringBuffer retBuf = new StringBuffer();
+            for (Map.Entry<String, String> entry : paramMap.entrySet())
+            {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                retBuf.append("&" + key + "=" + value);
+            }
+            
+            if (retBuf.length() > 0)
+            {
+                ret = retBuf.substring(1);
+                ret = ret.replaceAll(":", "%3A");
+                ret = ret.replaceAll("#", "%23");
+            }
+        }
+        return ret;
+    }
+    
     /**
      * 
     * 从对象中抽取http请求的参数字符串
@@ -396,7 +420,7 @@ public class CommonUtil
     }
     
     /**
-     * 从字符串中取出token
+     * 从字符串中取出Strutstoken
      */
     public static String getStrutsToken(String content)
     {
@@ -411,6 +435,61 @@ public class CommonUtil
             return m.group(1);
         }
         return "";
+    }
+    
+    /**
+     * 从字符串中取出余票token
+     */
+    public static String getLeftTicketToken(String content)
+    {
+        if (content == null || content.equals(""))
+        {
+            return "";
+        }
+        Matcher m = Pattern.compile("(?is)<input.*?id=\"left_ticket\".*?value=\"(\\w+)\".*/?>")
+                .matcher(content);
+        if (m.find())
+        {
+            return m.group(1);
+        }
+        return "";
+    }
+    
+    /**
+     * 
+    * 可购买的席别类型 
+    * <功能详细描述> 
+    * @param content
+    * @return [参数说明] 
+    * 
+    * @return String [返回类型说明] 
+    * @exception throws [违例类型] [违例说明] 
+    * @see [类、类#方法、类#成员]
+     */
+    public static String getSeatAvailable(String content)
+    {
+        if (content == null || content.equals(""))
+        {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        Matcher m = Pattern.compile("(?is)<select.*?id=\"passenger_1_seat\".*?</select>")
+                .matcher(content);
+        if (m.find())
+        {
+            String select = m.group();
+            m = Pattern.compile("(?is)<option.*?>(.*?)</option>")
+                    .matcher(select);
+            while (m.find())
+            {
+                sb.append(m.group(1)).append(",");
+            }
+            if (sb.length() > 0)
+            {
+                sb.deleteCharAt(sb.length() - 1);
+            }
+        }
+        return sb.toString();
     }
     
     public static void main(String[] args)

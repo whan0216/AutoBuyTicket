@@ -25,7 +25,7 @@ public class TicketQryCondition
     /**
      * 出发日期
      */
-    @ParamMapping(paramcode = "orderRequest.train_date", mapping = "queryLeftTicket=;queryststrainall=date;submutOrderRequest=train_date")
+    @ParamMapping(paramcode = "orderRequest.train_date", mapping = "queryLeftTicket=;queryststrainall=date;submutOrderRequest=train_date;confirmSingleForQueueOrder=orderRequest.train_date")
     private String start_date;
     
     /**
@@ -54,13 +54,13 @@ public class TicketQryCondition
     /**
      * 列车过站类型 ： 全部 始发 过路 QB SF GL
      */
-    @ParamMapping(paramcode = "trainPassType", mapping = "queryLeftTicket=;submutOrderRequest=")
+    @ParamMapping(paramcode = "trainPassType", mapping = "queryLeftTicket=;submutOrderRequest=train_pass_type")
     private String train_pass_type = "QB";
     
     /**
      * 查询方式：普通查询 学生票查询 民工团体查询  00 0X00 1F
      */
-    @ParamMapping(paramcode = "includeStudent", mapping = "queryLeftTicket=;submutOrderRequest=")
+    @ParamMapping(paramcode = "includeStudent", mapping = "queryLeftTicket=;submutOrderRequest=include_student")
     private String qry_type = "00";
     
     /**
@@ -128,7 +128,7 @@ public class TicketQryCondition
         ret.setFrom_station("南京");
         ret.setTo_station("襄阳");
         ret.setFrom_station_code("NJH");
-        ret.setStart_date("2012-12-21");
+        ret.setStart_date("2012-12-30");
         ret.setTo_station_code("XFN");
         ret.setTrain_number("");
         return ret;

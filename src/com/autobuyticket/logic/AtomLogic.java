@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +16,9 @@ import net.sf.json.JSONObject;
 
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
 
 import com.autobuyticket.config.SysConfig;
 import com.autobuyticket.constant.Constant;
@@ -23,6 +26,7 @@ import com.autobuyticket.core.CommonUtil;
 import com.autobuyticket.core.HttpUtil;
 import com.autobuyticket.core.StringUtil;
 import com.autobuyticket.domain.LoginInfo;
+import com.autobuyticket.domain.PassengerInfo;
 import com.autobuyticket.domain.RemainTicketInfo;
 import com.autobuyticket.domain.StationNameInfo;
 import com.autobuyticket.domain.TicketQryCondition;
@@ -411,6 +415,44 @@ public class AtomLogic
     
     /**
      * 
+    * 获取确认订单时候的验证码 
+    * <功能详细描述> 
+    * @param cookieHeaders
+    * 
+    * @return File [返回类型说明] 
+    * @exception throws [违例类型] [违例说明] 
+    * @see [类、类#方法、类#成员]
+     */
+    public static File getOrderPassCode(Header[] cookieHeaders)
+            throws Exception
+    {
+        File ret = null;
+        if (null != cookieHeaders)
+        {
+            try
+            {
+                //获取订单验证码
+                Header[] headers = HttpUtil.getRequestHeader(Constant.URL_4_REFERER_PASSENGER,
+                        cookieHeaders);
+                HttpResponse response = HttpUtil.sendGet(Constant.URL_4_PASS_CODE,
+                        headers);
+                InputStream in = response.getEntity().getContent();
+                
+                ret = new File(SysConfig.getDefConfig().getCache_path(),
+                        Constant.CACHE_PASS_CODE_IMG);
+                
+                CommonUtil.streamPipeline(in, new FileOutputStream(ret));
+            }
+            catch (Exception e)
+            {
+                
+            }
+        }
+        return ret;
+    }
+    
+    /**
+     * 
     * 登录车票订票页面 
     * <功能详细描述> 
     * @param loginInfo
@@ -470,14 +512,14 @@ public class AtomLogic
     * @param cookieHeaders
     * @return [参数说明] 
     * 
-    * @return boolean [返回类型说明] 
+    * @return String[] [返回类型说明] 
     * @exception throws [违例类型] [违例说明] 
     * @see [类、类#方法、类#成员]
      */
-    public static boolean doPreBookTicket(TicketQryCondition ticket,
+    public static String[] doPreBookTicket(TicketQryCondition ticket,
             RemainTicketInfo remain, Header[] cookieHeaders)
     {
-        boolean ret = false;
+        String[] ret = null;
         Header[] headers = HttpUtil.getRequestHeader(Constant.URL_4_REFERER_ORDER,
                 cookieHeaders);
         
@@ -505,12 +547,28 @@ public class AtomLogic
             String beforeOrderResult = CommonUtil.getContent(response.getEntity()
                     .getContent());
             
-            if (beforeOrderResult.indexOf("系统忙") > -1)
+            int statusCode = response.getStatusLine().getStatusCode();
+            
+            // 返回码 301 或 302 转发到location的新地址
+            if (statusCode == HttpStatus.SC_MOVED_PERMANENTLY
+                    || statusCode == HttpStatus.SC_MOVED_TEMPORARILY)
             {
+                Header locationHeader = response.getFirstHeader("location");
+                String redirectUrl = locationHeader.getValue();
+                
+                response = HttpUtil.sendPost(redirectUrl,
+                        (Map<String, String>)null,
+                        headers);
+                String responseBody = CommonUtil.getContent(response.getEntity()
+                        .getContent());
+                
+                String strutsToken = CommonUtil.getStrutsToken(responseBody);
+                String leftTicketToken = CommonUtil.getLeftTicketToken(responseBody);
+                String seattypes = CommonUtil.getSeatAvailable(responseBody);
+                ret = new String[] {strutsToken, leftTicketToken, seattypes};
             }
             else
             {
-                ret = true;
             }
         }
         catch (Exception ex)
@@ -520,27 +578,205 @@ public class AtomLogic
         return ret;
     }
     
-    public static boolean doSubmitOrder(Header[] cookieHeaders)
+    public static boolean doSubmitOrder(String randCode, String[] tokens,
+            Header[] cookieHeaders, List<PassengerInfo> passengers,
+            TicketQryCondition ticket, RemainTicketInfo remain)
     {
         boolean ret = false;
         try
         {
-            //获取页面token,余票token
-            String confirmOrderUrl = "https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?method=init";
-            Header[] headers = HttpUtil.getRequestHeader(Constant.URL_4_REFERER_ORDER,
-                    cookieHeaders);
-            HttpResponse response = HttpUtil.sendGet(confirmOrderUrl, headers);
-            String content = CommonUtil.getContent(response.getEntity()
-                    .getContent());
-            System.out.println("content:" + content);
-            String strutsToken = CommonUtil.getStrutsToken(content);
-            System.out.println("strutsToken:" + strutsToken);
+            List<NameValuePair> nvps = CommonUtil.getParamList(ticket,
+                    "confirmSingleForQueueOrder");
+            nvps.addAll(CommonUtil.getParamList(remain.getSelectedInfo(),
+                    "confirmSingleForQueueOrder"));
+            
+            nvps.add(new BasicNameValuePair(
+                    "org.apache.struts.taglib.html.TOKEN", tokens[0]));
+            nvps.add(new BasicNameValuePair("leftTicketStr", tokens[0]));
+            nvps.add(new BasicNameValuePair("textfield", "中文或拼音首字母"));
+            nvps.add(new BasicNameValuePair("orderRequest.seat_type_code", ""));
+            nvps.add(new BasicNameValuePair(
+                    "orderRequest.seat_detail_type_code", ""));
+            nvps.add(new BasicNameValuePair(
+                    "orderRequest.ticket_type_order_num", ""));
+            nvps.add(new BasicNameValuePair("orderRequest.bed_level_order_num",
+                    "000000000000000000000000000000"));
+            nvps.add(new BasicNameValuePair("orderRequest.cancel_flag", "1"));
+            nvps.add(new BasicNameValuePair("orderRequest.id_mode", "Y"));
+            nvps.add(new BasicNameValuePair("orderRequest.reserve_flag", "A"));
+            nvps.add(new BasicNameValuePair("tFlag", "A"));
+            nvps.add(new BasicNameValuePair("randCode", randCode));
+            
+            int index = 0;
+            nvps.add(new BasicNameValuePair("oldPassengers", ""));
+            nvps.add(new BasicNameValuePair("checkbox9", "Y"));
+            for (PassengerInfo passenger : passengers)
+            {
+                nvps.addAll(passenger.getNameValuePairs(++index));
+            }
+            
+            if (checkOrderInfo(nvps, cookieHeaders))
+            {
+                for (PassengerInfo passenger : passengers)
+                {
+                    getQueueCount(passenger.getSeat_type(),
+                            ticket,
+                            remain,
+                            tokens,
+                            cookieHeaders);
+                }
+                
+                Header[] headers = HttpUtil.getRequestHeader(Constant.URL_4_REFERER_PASSENGER,
+                        cookieHeaders);
+                
+                HttpResponse response = HttpUtil.sendPost(Constant.URL_4_CONFIRM_ORDER,
+                        nvps,
+                        headers);
+                String result = CommonUtil.getContent(response.getEntity()
+                        .getContent());
+                
+                ret = result.equals("{\"errMsg\":\"Y\"}");
+            }
         }
         catch (Exception e)
         {
             
         }
         return ret;
+    }
+    
+    /**
+     * 
+    * 校验订单信息
+    * <功能详细描述> 
+    * @param nvps
+    * @param cookieHeaders 
+    * 
+    * @return boolean [返回类型说明] 
+    * @exception throws [违例类型] [违例说明] 
+    * @see [类、类#方法、类#成员]
+     */
+    public static boolean checkOrderInfo(List<NameValuePair> nvps,
+            Header[] cookieHeaders)
+    {
+        boolean ret = false;
+        
+        Header[] headers = HttpUtil.getRequestHeader(Constant.URL_4_REFERER_PASSENGER,
+                cookieHeaders);
+        
+        try
+        {
+            HttpResponse response = HttpUtil.sendPost(Constant.URL_4_PRE_BOOK_TICKET,
+                    nvps,
+                    headers);
+            String result = CommonUtil.getContent(response.getEntity()
+                    .getContent());
+            
+            ret = result.contains("\"errMsg\":\"Y\"");
+        }
+        catch (Exception e)
+        {
+            
+        }
+        return ret;
+    }
+    
+    /**
+     * 
+    * 排队信息 
+    * <功能详细描述> 
+    * @param seat
+    * @param ticket
+    * @param remain
+    * @param tokens
+    * @param cookieHeaders [参数说明] 
+    * 
+    * @return void [返回类型说明] 
+    * @exception throws [违例类型] [违例说明] 
+    * @see [类、类#方法、类#成员]
+     */
+    public static void getQueueCount(String seat, TicketQryCondition ticket,
+            RemainTicketInfo remain, String[] tokens, Header[] cookieHeaders)
+    {
+        Map<String, String> params = new HashMap<String, String>();
+        //        train_date:2012-12-21
+        //        train_no:55000K151240
+        //        station:K1512
+        //        seat:3
+        //        from:NJH
+        //        to:XFN
+        //        ticket:1012803174403710002110128000863023700066
+        params.put("train_date", ticket.getStart_date());
+        params.put("train_no", remain.getId());
+        params.put("station", remain.getTrain_code());
+        params.put("seat", seat);
+        params.put("from", ticket.getFrom_station_code());
+        params.put("to", ticket.getTo_station_code());
+        params.put("ticket", tokens[1]);
+        
+        String paramsStr = CommonUtil.getParamsString(params);
+        
+        //查询余票数
+        String ticketLeft = Constant.URL_4_QUEUECOUNT + "&" + paramsStr;
+        Header[] headers = HttpUtil.getRequestHeader(Constant.URL_4_REFERER_PASSENGER,
+                cookieHeaders);
+        
+        try
+        {
+            HttpResponse response = HttpUtil.sendGet(ticketLeft, headers);
+            String content = CommonUtil.getContent(response.getEntity()
+                    .getContent());
+            
+            JSONObject jo = JSONObject.fromObject(content);
+            String ticketLeftCount = jo.getString("ticket");
+        }
+        catch (Exception ex)
+        {
+            
+        }
+        
+    }
+    
+    /**
+     * 
+    * 查询常用联系人 
+    * <功能详细描述> 
+    * @param cookieHeaders
+    * 
+    * @return List<PassengerInfo> [返回类型说明] 
+    * @exception throws [违例类型] [违例说明] 
+    * @see [类、类#方法、类#成员]
+     */
+    public static List<PassengerInfo> getPassenger(Header[] cookieHeaders)
+    {
+        List<PassengerInfo> retlist = new ArrayList<PassengerInfo>();
+        Header[] headers = HttpUtil.getRequestHeader(Constant.URL_4_REFERER_PASSENGER,
+                cookieHeaders);
+        try
+        {
+            HttpResponse response = HttpUtil.sendPost(Constant.URL_4_GET_PASSENGER,
+                    (Map<String, String>)null,
+                    headers);
+            String content = CommonUtil.getContent(response.getEntity()
+                    .getContent());
+            
+            JSONObject jo = JSONObject.fromObject(content);
+            Object[] objs = jo.getJSONArray("passengerJson").toArray();
+            for (Object obj : objs)
+            {
+                if (obj instanceof JSONObject)
+                {
+                    JSONObject jObj = (JSONObject)obj;
+                    retlist.add(PassengerInfo.getNewPassengerInfo(jObj));
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            System.out.println("error");
+        }
+        
+        return retlist;
     }
     
     public static void main(String[] args) throws IOException
@@ -570,13 +806,45 @@ public class AtomLogic
                     cookieHeaders);
             System.out.println(map);
             
-            ret = doPreBookTicket(TicketQryCondition.getTestObject(),
-                    map.get("K1512"),
-                    cookieHeaders);
+            try
+            {
+                
+                String[] tokens = doPreBookTicket(TicketQryCondition.getTestObject(),
+                        map.get("K1512"),
+                        cookieHeaders);
+                
+                AtomLogic.getOrderPassCode(cookieHeaders);
+                
+                System.out.println("please input:");
+                s = br.readLine();
+                
+                List<PassengerInfo> passengers = getPassenger(cookieHeaders);
+                passengers = passengers.subList(0, 1);
+                for (PassengerInfo passenger : passengers)
+                {
+                    //3硬卧 1硬座 4软卧
+                    passenger.setSeat_type("3");
+                }
+                
+                doSubmitOrder(s,
+                        tokens,
+                        cookieHeaders,
+                        passengers,
+                        TicketQryCondition.getTestObject(),
+                        map.get("K1512"));
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+            
+            //            ret = doPreBookTicket(TicketQryCondition.getTestObject(),
+            //                    map.get("K1512"),
+            //                    cookieHeaders);
             
             System.out.println("pre book ticket :" + ret);
             
-            doSubmitOrder(cookieHeaders);
+            //            doSubmitOrder(cookieHeaders);
         }
         catch (IOException e)
         {

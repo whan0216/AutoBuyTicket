@@ -4,31 +4,31 @@ import com.autobuyticket.annotation.ParamMapping;
 
 public class TrainSelectedInfo
 {
-    @ParamMapping(paramcode = "station_train_code", mapping = "submutOrderRequest=")
+    @ParamMapping(paramcode = "station_train_code", mapping = "submutOrderRequest=;confirmSingleForQueueOrder=orderRequest.station_train_code")
     private String station_train_code;
     
     @ParamMapping(paramcode = "lishi", mapping = "submutOrderRequest=")
     private String lishi;
     
-    @ParamMapping(paramcode = "train_start_time", mapping = "submutOrderRequest=")
+    @ParamMapping(paramcode = "train_start_time", mapping = "submutOrderRequest=;confirmSingleForQueueOrder=orderRequest.start_time")
     private String starttime;
     
-    @ParamMapping(paramcode = "trainno4", mapping = "submutOrderRequest=")
+    @ParamMapping(paramcode = "trainno4", mapping = "submutOrderRequest=;confirmSingleForQueueOrder=orderRequest.train_no")
     private String trainno;
     
-    @ParamMapping(paramcode = "from_station_telecode", mapping = "submutOrderRequest=")
+    @ParamMapping(paramcode = "from_station_telecode", mapping = "submutOrderRequest=;confirmSingleForQueueOrder=orderRequest.from_station_telecode")
     private String from_station_telecode;
     
-    @ParamMapping(paramcode = "to_station_telecode", mapping = "submutOrderRequest=")
+    @ParamMapping(paramcode = "to_station_telecode", mapping = "submutOrderRequest=;confirmSingleForQueueOrder=orderRequest.to_station_telecode")
     private String to_station_telecode;
     
-    @ParamMapping(paramcode = "arrive_time", mapping = "submutOrderRequest=")
+    @ParamMapping(paramcode = "arrive_time", mapping = "submutOrderRequest=;confirmSingleForQueueOrder=orderRequest.end_time")
     private String arrive_time;
     
-    @ParamMapping(paramcode = "from_station_name", mapping = "submutOrderRequest=")
+    @ParamMapping(paramcode = "from_station_name", mapping = "submutOrderRequest=;confirmSingleForQueueOrder=orderRequest.from_station_name")
     private String from_station_name;
     
-    @ParamMapping(paramcode = "to_station_name", mapping = "submutOrderRequest=")
+    @ParamMapping(paramcode = "to_station_name", mapping = "submutOrderRequest=;confirmSingleForQueueOrder=orderRequest.to_station_name")
     private String to_station_name;
     
     @ParamMapping(paramcode = "from_station_no", mapping = "submutOrderRequest=")
@@ -42,6 +42,9 @@ public class TrainSelectedInfo
     
     @ParamMapping(paramcode = "mmStr", mapping = "submutOrderRequest=")
     private String mmStr;
+    
+    @ParamMapping(paramcode = "locationCode", mapping = "submutOrderRequest=")
+    private String locationCode;
     
     public TrainSelectedInfo(String selectStr)
     {
@@ -59,6 +62,17 @@ public class TrainSelectedInfo
         to_station_no = selectStr_arr[10];
         ypInfoDetail = selectStr_arr[11];
         mmStr = selectStr_arr[12];
+        locationCode = selectStr_arr[13];
+    }
+    
+    public String getLocationCode()
+    {
+        return locationCode;
+    }
+    
+    public void setLocationCode(String locationCode)
+    {
+        this.locationCode = locationCode;
     }
     
     public String getStation_train_code()
