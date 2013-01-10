@@ -128,7 +128,7 @@ public class TicketQryCondition
         ret.setFrom_station("南京");
         ret.setTo_station("襄阳");
         ret.setFrom_station_code("NJH");
-        ret.setStart_date("2012-12-30");
+        ret.setStart_date("2013-01-20");
         ret.setTo_station_code("XFN");
         ret.setTrain_number("");
         return ret;
